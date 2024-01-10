@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div :id="label + 'graph'"></div>
     <h2>{{ label }}</h2>
     <svg :id="label"></svg>
   </div>
@@ -35,6 +36,45 @@ export default {
     if (isProxy(this.values)) {
       data = toRaw(data)
     }
+    var tooltip = d3.select(`#${this.label}graph`)
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("position", "relative")
+      .style("background-color", "black")
+      .style("color", "white")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+      .style("width", "150px")
+
+
+    const showTooltip = (event, d) => {
+
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", 1)
+      tooltip
+        .html("Valor: " + d.amount.toFixed(2))
+        .style("left", (d3.pointer(event)[0]+350) + "px")
+        .style("top", (d3.pointer(event)[1]+65) + "px")
+  
+    }
+
+    // eslint-disable-next-line
+    const moveTooltip = (event, d) => {
+      tooltip
+        .style("left", (d3.pointer(event)[0]+350) + "px")
+        .style("top", (d3.pointer(event)[1]+65) + "px")
+    }
+
+    // eslint-disable-next-line
+    const hideTooltip = (event, d) => {
+      tooltip
+        .transition()
+        .duration(100)
+        .style("opacity", 0)
+    }
 
     const x = d3
       .scaleBand()
@@ -63,7 +103,10 @@ export default {
       .attr("x", (d) => x(d.date))
       .attr("y", (d) => y(d.amount))
       .attr("height", (d) => y(0) - y(d.amount))
-      .attr("width", 50);
+      .attr("width", 50)
+      .on("mouseover", showTooltip)
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip);
 
   svg.append("g")
       .attr("transform", `translate(0,${height - marginBottom})`)

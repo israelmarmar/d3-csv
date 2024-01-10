@@ -6,6 +6,16 @@ const monthNames = ["", "Jan", "Feb", "Mar", "Apr", "May", "June",
   "July", "Aug", "Sept", "Oct", "Nov", "Dec"
 ];
 
+const countMap = (data: any)=>{
+  const count: any = {};
+
+  for (let i = 0; i < data.length; i++) {
+    count[data[i]] = count[data[i]] ? count[data[i]] + 1 : 1;
+  }
+
+  return Object.keys(count).map(key => Object.assign({ quantity: count[key], value: parseInt(key) }));
+}
+
 export const getCharges = (req: Request, res: Response) => {
   let index = 0;
   const results: any = [];
@@ -14,7 +24,7 @@ export const getCharges = (req: Request, res: Response) => {
     (parseInt((req.query.skip as string) || "100") - 1) * limit;
   let mmr: any = {};
   let churn: any = {};
-  const quantities: any = [];
+  let quantities: any = [];
 
   const path = req.file?.path || "";
 
@@ -38,6 +48,7 @@ export const getCharges = (req: Request, res: Response) => {
     .on("end", () => {
       mmr = Object.keys(mmr).map(key=>Object.assign({date: monthNames[parseInt(key)], amount: mmr[key]}));
       churn = Object.keys(churn).map(key=>Object.assign({date: monthNames[parseInt(key)], amount: churn[key]}));
+      quantities = countMap(quantities);
       res.json({ data: results, skip: req.query.skip, limit, mmr, churn, quantities });
     });
 };
