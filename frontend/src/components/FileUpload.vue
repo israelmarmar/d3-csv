@@ -5,14 +5,16 @@
   </div>
   <p v-if="selectedFile">{{ selectedFile.name }}</p>
   <div v-if="values">
-    <BarGraph label="MMR" :values="values.mmr"/>
-    <BarGraph label="Churn" :values="values.churn"/>
+    <BarGraph id="mmr" label="MMR" :values="values.mmr" color="steelblue"/>
+    <BarGraph id="churn" label="Churn" :values="values.churn" color="red"/>
+    <BarGraph id="mmrxchurn" label="MMR X Chrun" :values={allData} color="steelblue"/>
     <QBarGraph label="Nº de cobranças" :values="values.quantities"/>
 
   </div>
 </template>
   
 <script>
+import { isProxy, toRaw } from 'vue';
 import BarGraph from "./BarGraph.vue";
 import QBarGraph from "./QBarGraph.vue";
 import axios from 'axios';
@@ -29,6 +31,20 @@ export default {
   components: {
     BarGraph,
     QBarGraph
+  },
+  computed: {
+    allData: function () {
+      let mmr = [];
+      let churn = [];
+
+      if (isProxy(this.values.mmr) && isProxy(this.values.churn)) {
+        mmr=toRaw(this.values.mmr);
+        churn=toRaw(this.values.churn);
+        churn=churn.map(d=>Object.assign({...d, amount: -d.amount}));
+      }
+
+      return [...mmr, ...churn]
+    }
   },
   methods: {
     handleDrop(event) {

@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div :id="label + 'graph'"></div>
+    <div :id="id + 'graph'"></div>
     <h2>{{ label }}</h2>
-    <svg :id="label"></svg>
+    <svg :id="id + 'svg'"></svg>
   </div>
 </template>
 <script>
@@ -14,6 +14,13 @@ export default {
     return {};
   },
   props: {
+    color: {
+      type: String
+    },
+    id: {
+      type: String,
+      required: true,
+    },
     label: {
       type: String,
       required: true,
@@ -25,7 +32,7 @@ export default {
   },
   mounted() {
     const width = 1000;
-    const height = 500;
+    const height = 1000;
     const marginTop = 30;
 
     const marginBottom = 30;
@@ -36,7 +43,14 @@ export default {
     if (isProxy(this.values)) {
       data = toRaw(data)
     }
-    var tooltip = d3.select(`#${this.label}graph`)
+
+    if (data.allData) {
+      data = toRaw(data.allData)
+    }
+
+    console.log(data);
+
+    var tooltip = d3.select(`#${this.id}graph`)
       .append("div")
       .style("opacity", 0)
       .attr("class", "tooltip")
@@ -56,16 +70,16 @@ export default {
         .style("opacity", 1)
       tooltip
         .html("Valor: " + d.amount.toFixed(2))
-        .style("left", (d3.pointer(event)[0]+350) + "px")
-        .style("top", (d3.pointer(event)[1]+65) + "px")
-  
+        .style("left", (d3.pointer(event)[0] + 350) + "px")
+        .style("top", (d3.pointer(event)[1] + 65) + "px")
+
     }
 
     // eslint-disable-next-line
     const moveTooltip = (event, d) => {
       tooltip
-        .style("left", (d3.pointer(event)[0]+350) + "px")
-        .style("top", (d3.pointer(event)[1]+65) + "px")
+        .style("left", (d3.pointer(event)[0] + 350) + "px")
+        .style("top", (d3.pointer(event)[1] + 65) + "px")
     }
 
     // eslint-disable-next-line
@@ -81,47 +95,47 @@ export default {
       .domain(data.map(d => d.date))
       .range([0, width])
       .padding(0.4);
-  
-  // Declare the y (vertical position) scale.
-  const y = d3.scaleLinear()
-      .domain([0, d3.max(data, (d) => d.amount)])
+
+    // Declare the y (vertical position) scale.
+    const y = d3.scaleLinear()
+      .domain([-d3.max(data, (d) => d.amount), d3.max(data, (d) => d.amount)])
       .range([height - marginBottom, marginTop]);
 
 
-  // Create the SVG container.
-  const svg = d3.select(`#${this.label}`)
+    // Create the SVG container.
+    const svg = d3.select(`#${this.id}svg`)
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height])
       .attr("style", "max-width: 100%; height: auto;");
 
-  svg.append("g")
-      .attr("fill", "steelblue")
-    .selectAll()
-    .data(data)
-    .join("rect")
+    svg.append("g")
+      .selectAll()
+      .data(data)
+      .join("rect")
+      .attr("fill", (d) => d.amount > 0 ? this.color : 'red')
       .attr("x", (d) => x(d.date))
-      .attr("y", (d) => y(d.amount))
-      .attr("height", (d) => y(0) - y(d.amount))
+      .attr("y", (d) => y(Math.max(0, d.amount)))
+      .attr("height", (d) => Math.abs(y(0) - y(d.amount)))
       .attr("width", 50)
       .on("mouseover", showTooltip)
       .on("mousemove", moveTooltip)
       .on("mouseleave", hideTooltip);
 
-  svg.append("g")
-      .attr("transform", `translate(0,${height - marginBottom})`)
+    svg.append("g")
+      .attr("transform", `translate(0,${height / 2})`)
       .call(d3.axisBottom(x).tickSizeOuter(0));
 
-  svg.append("g")
+    svg.append("g")
       .attr("transform", `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y).tickFormat((y) => y.toFixed()))
       .call(g => g.select(".domain").remove())
       .call(g => g.append("text")
-          .attr("x", -marginLeft)
-          .attr("y", 10)
-          .attr("fill", "currentColor")
-          .attr("text-anchor", "start")
-          .text("Valor (R$)"));
+        .attr("x", -marginLeft)
+        .attr("y", 10)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "start")
+        .text("Valor (R$)"));
   },
 };
 </script>
